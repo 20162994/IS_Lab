@@ -1,0 +1,72 @@
+%DISfm-20 gr. stud. Daniel Sipovič
+
+x = 0:1/19:1;
+d = (1 + 0.6*sin(2*pi*x/0.7)) + 0.3*sin(2*pi*x)/2;
+n = 0.15;
+
+y = zeros(1,20);
+
+%Neuronų skaičius 5
+for index=1:5
+    w_1(index) = randn(1);
+    b_1(index) = randn(1);
+    w_2(index) = randn(1);
+end
+
+b_2 = randn(1);
+count = 0;
+iteration = 0;
+
+%Vyksta kol nepasiekiamas nustatytas tikslumas
+while count ~= 20
+%for a=1:100000
+    count = 0;
+    iteration = iteration + 1;
+for index=1:20    
+    for i=1:5
+        y_(i) = hidden_layer_activation(x(index), w_1(i), b_1(i));
+    end
+    
+    y(index) = calculate_output(y_(1), y_(2), y_(3), y_(4), y_(5), w_2(1), w_2(2), w_2(3), w_2(4), w_2(5));
+    e(index) = d(index) - y(index);
+    
+    if abs(e(index)) > 0.05 %Galima nustatyti norimą tikslumą
+        for i=1:5
+            w_2(i) = update_output_layer(w_2(i), n, e(index), y_(i));
+            [w_1(i),b_1(i)] = update_hidden_layer(x(index), w_1(i), b_1(i), e(index), w_2(i), n);
+        end
+        b_2 = b_2 + n * e(index);
+    else
+        count = count + 1;
+    end
+end
+end
+
+for index=1:20    
+    for i=1:5
+        y_(i) = hidden_layer_activation(x(index), w_1(i), b_1(i));
+    end    
+    y(index) = calculate_output(y_(1), y_(2), y_(3), y_(4), y_(5), w_2(1), w_2(2), w_2(3), w_2(4), w_2(5));
+    e(index) = d(index) - y(index);   
+end
+
+%Patikrinimui
+plot(x,d,'b', x,y,'r')
+
+function [value] = hidden_layer_activation(x, w, b)
+    value = 1/(1+exp(-x*w-b));
+end
+
+function [output] = calculate_output(y_1, y_2, y_3, y_4, y_5, w_2_1, w_2_2, w_2_3, w_2_4, w_2_5)
+    output = y_1*w_2_1+y_2*w_2_2+y_3*w_2_3+y_4*w_2_4+y_5*w_2_5;
+end
+
+function [weight] = update_output_layer(w, n, e, y)
+    weight = w+n*e*y; 
+end
+
+function [w_1, b_1] = update_hidden_layer(x, w_1, b_1, e, w_2, n)
+    delta = (1/(1+exp(-x*w_1-b_1)))*(1-1/(1+exp(-x*w_1-b_1)))*e*w_2;
+    w_1 = w_1 + n*delta*x;
+    b_1 = b_1 + n*delta;
+end
